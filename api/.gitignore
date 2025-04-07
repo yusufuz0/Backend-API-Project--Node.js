@@ -3,4 +3,5 @@ package-lock.json
 .env
 db/serviceAccountKey.json
 eslint.config.mjs
+../.vscode/
 

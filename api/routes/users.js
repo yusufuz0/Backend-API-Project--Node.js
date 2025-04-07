@@ -4,9 +4,11 @@ const db = require("../db/firebase");
 const Response = require('../lib/Response');
 const CustomError = require('../lib/Error');
 const Enum = require('../config/Enum');
+const config = require('../config');
 const { FieldPath } = require("firebase-admin/firestore"); // Firestore'dan FieldPath'i içe aktarın
 const bcrypt = require("bcrypt-nodejs");
-const is = require("is_js")
+const is = require("is_js");
+const jwt = require("jwt-simple");
 
 
 
@@ -268,5 +270,50 @@ router.post('/register', async (req, res) => {
   }
 });
 
+
+router.post("/auth", async(req, res) => {
+
+  try {
+
+    let {email, password} = req.body;
+
+    if (typeof password !== "string" || password.length < Enum.PASS_LENGHT || is.not.email(email)) {
+      throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, 'Validation Error!', 'Email or password is not valid!');
+    }
+
+    let snapshot = await db.collection("Users").where("email", "==", email).get();
+    let user = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    user = user[0];
+
+    if(!user) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, 'Validation Error!', 'Email or password is not valid!');
+
+    const validPassword = await bcrypt.compareSync(password, user.password);
+    if (!validPassword) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, 'Validation Error!', 'Email or password is not valid!');
+    
+    let payload = {
+      id : user.id,
+      exp : parseInt(Date.now() / 1000) + config.JWT.EXPIRE_TIME
+    }
+
+    let token = jwt.encode(payload, config.JWT.SECRET);
+
+    let userData = {
+      id: user.id,
+      first_name: user.first_name,
+      last_name:  user.last_name,
+    }
+
+
+    res.json(Response.successResponse({token, user: userData}));
+    
+  } 
+
+  catch (err) {
+    let errorResponse = Response.errorResponse(err);
+    res.status(errorResponse.code).json(Response.errorResponse(err));
+  }
+  
+
+});
 
 module.exports = router;
