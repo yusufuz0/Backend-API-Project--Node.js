@@ -96,7 +96,6 @@ router.post('/add', async (req, res) => {
 });
 
 
-
 router.post('/update', async (req, res) => {
   try {
     let body = req.body;
@@ -194,8 +193,6 @@ router.post('/delete', async (req, res) => {
     res.status(errorResponse.code).json(Response.errorResponse(err));
   }
 });
-
-
 
 
 router.post('/register', async (req, res) => {
