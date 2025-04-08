@@ -3,10 +3,15 @@ var router = express.Router();
 const Response = require('../lib/Response');
 const moment = require("moment");
 const db = require("../db/firebase");
+const auth = require("../lib/auth")();
 
 
+router.all("*", auth.authenticate(), (req, res, next) => {
+    next();
+});
 
-router.post("/", async (req, res) => {
+
+router.post("/", auth.checkRoles("auditlogs_view") ,async (req, res) => {
   try {
       let body = req.body;
       let skip = typeof body.skip === "number" ? body.skip : 0;
