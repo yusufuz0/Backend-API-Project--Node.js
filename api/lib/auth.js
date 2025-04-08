@@ -2,6 +2,11 @@ const passport = require("passport");
 const { ExtractJwt, Strategy } = require("passport-jwt");
 const db = require("../db/firebase");
 const config = require("../config");
+const privs = require("../config/role_privileges");
+const Response = require("./Response");
+const { HTTP_CODES } = require("../config/Enum");
+const CustomError = require("./Error");
+
 
 
 module.exports = function () {
@@ -11,8 +16,7 @@ module.exports = function () {
     }, async (payload, done) => {
         try {
             // Kullanıcıyı Firestore'dan bulma
-            let userDoc = await admin.firestore().collection('users').doc(payload.id).get();
-            
+            let userDoc = await db.collection('Users').doc(payload.id).get();            
             if (!userDoc.exists) {
                 return done(new Error("User not found"), null);
             }
@@ -20,12 +24,12 @@ module.exports = function () {
             let user = userDoc.data();
 
             // Kullanıcının rollerini almak
-            let userRolesSnapshot = await admin.firestore().collection('userRoles').where('user_id', '==', payload.id).get();
+            let userRolesSnapshot = await db.collection('UserRoles').where('user_id', '==', payload.id).get();
             let userRoles = userRolesSnapshot.docs.map(doc => doc.data());
 
             // Rollere ait yetkileri almak
             let roleIds = userRoles.map(ur => ur.role_id);
-            let rolePrivilegesSnapshot = await admin.firestore().collection('rolePrivileges').where('role_id', 'in', roleIds).get();
+            let rolePrivilegesSnapshot = await db.collection('RolePrivileges').where('role_id', 'in', roleIds).get();
             let rolePrivileges = rolePrivilegesSnapshot.docs.map(doc => doc.data());
 
             // Yetkileri almak
@@ -54,6 +58,25 @@ module.exports = function () {
         },
         authenticate: function () {
             return passport.authenticate("jwt", { session: false });
+        },
+
+        checkRoles: (...expectedRoles) => {
+            return (req, res, next) => {
+
+                let i = 0;
+                let privileges = req.user.roles.filter(x => x).map(x => x.key);
+
+                while (i < expectedRoles.length && !privileges.includes(expectedRoles[i])) i++;
+
+                if (i >= expectedRoles.length) {
+                    let response = Response.errorResponse(new CustomError(HTTP_CODES.UNAUTHORIZED, "Need Permission", "Need Permission"));
+                    return res.status(response.code).json(response);
+                }
+
+                return next(); // Authorized
+
+            }
         }
+
     };
 };

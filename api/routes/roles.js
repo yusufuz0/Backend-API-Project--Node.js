@@ -6,11 +6,15 @@ const CustomError = require('../lib/Error');
 const Enum = require('../config/Enum');
 const role_privileges = require('../config/role_privileges');
 const { FieldPath } = require("firebase-admin/firestore"); // Firestore'dan FieldPath'i içe aktarın
+const auth = require("../lib/auth")();
 
 
+router.all("*", auth.authenticate(), (req, res, next) => {
+    next();
+});
 
 
-router.get("/", async (req, res) => {
+router.get("/", auth.checkRoles("role_view") , async (req, res) => {
     try {
       const snapshot = await db.collection("Roles").get();
       const roles = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -24,7 +28,7 @@ router.get("/", async (req, res) => {
   });
 
 
-  router.post('/add', async (req, res) => {  
+  router.post('/add', auth.checkRoles("role_add") ,async (req, res) => {  
     let body = req.body;
     try {
         if (!body.role_name) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'Name field must be filled');
@@ -78,7 +82,7 @@ router.get("/", async (req, res) => {
 });
 
 
-router.post('/update', async (req, res) => {  
+router.post('/update', auth.checkRoles("role_update"), async (req, res) => {  
     let body = req.body;
     try {
         if (!body.id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'id field must be filled');
@@ -150,7 +154,7 @@ router.post('/update', async (req, res) => {
 
 
     
-router.post('/delete', async (req, res) => {
+router.post('/delete', auth.checkRoles("role_delete"), async (req, res) => {
     let body = req.body;
     try {
         if (!body.id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'id field must be filled');
