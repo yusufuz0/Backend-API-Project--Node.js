@@ -10,7 +10,7 @@ const bcrypt = require("bcrypt-nodejs");
 const is = require("is_js");
 const jwt = require("jwt-simple");
 const auth = require("../lib/auth")();
-
+const i18n = new (require("../lib/i18n"))(config.DEFAULT_LANG)
 
 
 router.post('/register', async (req, res) => {
@@ -25,14 +25,14 @@ router.post('/register', async (req, res) => {
     }
     
 
-    if (!body.email) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'Email field must be filled');
+    if (!body.email) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", config.DEFAULT_LANG) , i18n.translate("COMMON.FIELD_MUST_BE_FILLED", config.DEFAULT_LANG, ["email"]));
 
-    if (!is.email(body.email)) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'Email field must be an email format');
+    if (!is.email(body.email)) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", config.DEFAULT_LANG) , i18n.translate("COMMON.FIELD_MUST_BE_AN_PROPER_FORMAT", config.DEFAULT_LANG, ["email"]));
 
-    if (!body.password) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'Password field must be filled');
+    if (!body.password) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", config.DEFAULT_LANG) , i18n.translate("COMMON.FIELD_MUST_BE_FILLED", config.DEFAULT_LANG, ["password"]));
 
     if (body.password.length < Enum.PASS_LENGHT) {
-      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'Password field must be greater than ' + Enum.PASS_LENGHT + ' characters');
+      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", config.DEFAULT_LANG), i18n.translate("USERS.PASSWORD_LENGTH_ERROR", config.DEFAULT_LANG, [Enum.PASS_LENGHT]));
     }
 
     // Check if the email already exists
@@ -41,7 +41,7 @@ router.post('/register', async (req, res) => {
       .get();
 
     if (!existingUserSnapshot.empty) {
-      throw new CustomError(Enum.HTTP_CODES.CONFLICT, 'Duplicate Error!', 'This email is already exists');
+      throw new CustomError(Enum.HTTP_CODES.CONFLICT,  i18n.translate("COMMON.DUPLICATE_ERROR", config.DEFAULT_LANG) , i18n.translate("COMMON.THIS_ALREADY_EXIST", req.user.language, ["email"]));
     }
 
     let password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(8), null);
@@ -93,17 +93,17 @@ router.post("/auth", async(req, res) => {
     let {email, password} = req.body;
 
     if (typeof password !== "string" || password.length < Enum.PASS_LENGHT || is.not.email(email)) {
-      throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, 'Validation Error!', 'Email or password is not valid!');
+      throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE",config.DEFAULT_LANG) , i18n.translate("USERS.AUTH_ERROR",config.DEFAULT_LANG));
     }
 
     let snapshot = await db.collection("Users").where("email", "==", email).get();
     let user = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     user = user[0];
 
-    if(!user) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, 'Validation Error!', 'Email or password is not valid!');
+    if(!user) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE",config.DEFAULT_LANG) , i18n.translate("USERS.AUTH_ERROR",config.DEFAULT_LANG));
 
     const validPassword = await bcrypt.compareSync(password, user.password);
-    if (!validPassword) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, 'Validation Error!', 'Email or password is not valid!');
+    if (!validPassword) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE",config.DEFAULT_LANG) ,i18n.translate("USERS.AUTH_ERROR",config.DEFAULT_LANG));
     
     let payload = {
       id : user.id,
@@ -155,14 +155,14 @@ router.get('/', auth.checkRoles("user_view"), async (req, res, next) => {
 router.post('/add',auth.checkRoles("user_add"),  async (req, res) => {
   let body = req.body;
   try {
-    if (!body.email) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'Email field must be filled');
+    if (!body.email) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,  i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["email"]));
 
-    if (!is.email(body.email)) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'Email field must be an email format');
+    if (!is.email(body.email)) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),  i18n.translate("COMMON.FIELD_MUST_BE_AN_PROPER_FORMAT", req.user.language, ["email"]));
 
-    if (!body.password) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'Password field must be filled');
+    if (!body.password) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),  i18n.translate("COMMON.FIELD_MUST_BE_AN_PROPER_FORMAT", req.user.language, ["password"]));
 
     if (body.password.length < Enum.PASS_LENGHT) {
-      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'Password field must be greater than ' + Enum.PASS_LENGHT + ' characters');
+      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.PASSWORD_FIELD_MUST_BE_GREATER_THAN_CHARACTERS", req.user.language, [Enum.PASS_LENGHT]));
     }
 
     // Check if the email already exists
@@ -171,19 +171,19 @@ router.post('/add',auth.checkRoles("user_add"),  async (req, res) => {
       .get();
 
     if (!existingUserSnapshot.empty) {
-      throw new CustomError(Enum.HTTP_CODES.CONFLICT, 'Duplicate Error!', 'This email is already exists');
+      throw new CustomError(Enum.HTTP_CODES.CONFLICT, i18n.translate("COMMON.DUPLICATE_ERROR", req.user.language) , i18n.translate("COMMON.THIS_ALREADY_EXIST", req.user.language, ["email"]));
     }
 
 
     if(!body.roles  || !Array.isArray(body.roles) || body.roles.length == 0){
-      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'Roles field must be an array');
+      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_TYPE", req.user.language, ["roles", "array"]));
     }
 
     
     let snapshot = await db.collection("Roles").where(FieldPath.documentId(), "in", body.roles).get();
     const roles = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     if(roles.length == 0){
-      throw new CustomError(Enum.HTTP_CODES.NOT_FOUND, 'Not Found Error!', 'Roles not found');
+      throw new CustomError(Enum.HTTP_CODES.NOT_FOUND,  i18n.translate("COMMON.NOT_FOUND_ERROR", req.user.language), i18n.translate("COMMON.NOT_FOUND", req.user.language, ["roles"]));
     }
 
 
@@ -226,7 +226,7 @@ router.post('/update', auth.checkRoles("user_update"), async (req, res) => {
     let body = req.body;
     let updates = {};
 
-    if(!body.id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'id field must be filled');
+    if(!body.id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,  i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["id"]));
 
     if(body.password && body.password.length >= Enum.PASS_LENGHT){
       updates.password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(8), null);
@@ -293,7 +293,7 @@ router.post('/delete', auth.checkRoles("user_delete"), async (req, res) => {
   try {
     let body = req.body;
 
-    if (!body.id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, 'Validation Error!', 'id field must be filled');
+    if (!body.id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["id"]));
 
     const batch = db.batch();
 
