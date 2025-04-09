@@ -43,7 +43,7 @@ router.post('/add', auth.checkRoles("category_add") ,async (req, res) => {
         await categoryRef.set({
           name: body.name,
           is_active: true,
-          created_by: 1,
+          created_by: req.user?.email ?? " ",
           created_at: new Date(),
           updated_at: new Date(),
         });

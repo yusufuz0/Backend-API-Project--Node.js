@@ -54,7 +54,7 @@ router.get("/", auth.checkRoles("role_view") , async (req, res) => {
         await roleRef.set({
           role_name: body.role_name,
           is_active: true,
-          created_by: 1,
+          created_by: req.user?.email ?? " ",
           created_at: new Date(),
           updated_at: new Date(),
         });
@@ -67,7 +67,7 @@ router.get("/", auth.checkRoles("role_view") , async (req, res) => {
             await RolePrivilegesRef.set({
                 role_id: roleRef.id,
                 permission: body.permissions[i],
-                created_by: 1,
+                created_by: req.user?.email ?? " ",
                 created_at: new Date(),
                 updated_at: new Date(),
             });
@@ -135,7 +135,7 @@ router.post('/update', auth.checkRoles("role_update"), async (req, res) => {
                     const newPermissionData = {
                         role_id: body.id,
                         permission: permission,
-                        created_by: 1,
+                        created_by: req.user?.email ?? " ",
                         created_at: new Date(),
                         updated_at: new Date(),
                     };
