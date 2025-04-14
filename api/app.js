@@ -35,6 +35,7 @@ app.use('/api/auditlogs',  require('./routes/auditlogs'));
 app.use('/api/categories',  require('./routes/categories'));
 app.use('/api/roles',  require('./routes/roles'));
 app.use('/api/events',  require('./routes/events'));
+app.use('/api/stats',  require('./routes/stats'));
 
 
 
