@@ -4,4 +4,5 @@ api/.env
 api/db/serviceAccountKey.json
 api/eslint.config.mjs
 .vscode/
+api/tmp
 
