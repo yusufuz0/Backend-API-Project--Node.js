@@ -20,7 +20,15 @@ router.get("/", auth.checkRoles("role_view") , async (req, res) => {
     try {
       const snapshot = await db.collection("Roles").get();
       const roles = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  
+
+     for (let i = 0; i < roles.length; i++) {
+        let snapshot = await db.collection("RolePrivileges").where("role_id", "==", roles[i].id).get();
+        const permissions = snapshot.docs.map((doc) => {
+            const { created_at, updated_at, ...rest } = doc.data();
+            return { id: doc.id, ...rest };
+          });
+        roles[i].permissions = permissions;
+     }
           res.json(Response.successResponse(roles));
   
       } catch (err) {

@@ -137,19 +137,49 @@ router.all("*", auth.authenticate(), (req, res, next) => {
 });
 
 
-/* GET users listing. */
+
 router.get('/', auth.checkRoles("user_view"), async (req, res, next) => {
   try {
     const snapshot = await db.collection("Users").get();
-    const users = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const users = snapshot.docs.map((doc) => {
+      const { password, ...rest } = doc.data(); // password'u ayır
+      return { id: doc.id, ...rest }; // sadece kalan alanları döndür
+    });
 
+    for (let i = 0; i < users.length; i++) {
+      const rolesSnapshot = await db.collection("UserRoles")
+        .where("user_id", "==", users[i].id)
+        .get();
+    
+      const roles = [];
+    
+      for (const roleDoc of rolesSnapshot.docs) {
+        const roleData = roleDoc.data();
+    
+        // role_id ile rol dokümanını çekiyoruz (select kullanmadan)
+        const roleRef = await db.collection("Roles").doc(roleData.role_id).get();
+    
+        if (roleRef.exists) {
+          const role = roleRef.data();
+    
+          // sadece role_name alıyoruz
+          roles.push({
+            role_name: role.role_name
+          });
+        }
+      }
+    
+      users[i].roles = roles;
+    }
+ 
     res.json(Response.successResponse(users));
   } 
   catch (err) {
-    let errorResponse = Response.errorResponse(err);
-    res.status(errorResponse.code).json(Response.errorResponse(err));   
+    const errorResponse = Response.errorResponse(err);
+    res.status(errorResponse.code).json(errorResponse);   
   }
 });
+
 
 
 router.post('/add',auth.checkRoles("user_add"),  async (req, res) => {
