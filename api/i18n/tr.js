@@ -7,6 +7,7 @@ module.exports = {
         "VALIDATION_ERROR": "Doğrulama Hatası",
         "DUPLICATE_ERROR": "Çift Kayıt Hatası!",
         "NOT_FOUND_ERROR": "Bulunamadı Hatası",
+        "NEED_PERMISSIONS": "İzin Gerekli",
 
         "NOT_FOUND": "{} bulunamadı",
         "FIELD_MUST_BE_FILLED": "{} alanı doldurulmalıdır",

@@ -23,6 +23,19 @@ const limiter = rateLimit({
 })
 
 
+
+router.all("*", (req, res, next) => {
+  // Şu yolları bypass et:
+  const excludedPaths = ["/register", "/auth"];
+  if (excludedPaths.includes(req.path)) {
+      return next(); // auth.authenticate atlanır
+  }
+
+  return auth.authenticate()(req, res, next);
+});
+
+
+
 router.post('/register', async (req, res) => {
   try {
     let body = req.body;
@@ -137,13 +150,6 @@ router.post("/auth",limiter, async(req, res) => {
     let errorResponse = Response.errorResponse(err);
     res.status(errorResponse.code).json(Response.errorResponse(err));
   }
-  
-
-});
-
-
-router.all("*", auth.authenticate(), (req, res, next) => {
-    next();
 });
 
 
@@ -277,6 +283,10 @@ router.post('/update', auth.checkRoles("user_update"), async (req, res) => {
     if(body.phone_number) updates.phone_number = body.phone_number;
     updates.updated_at = new Date();
 
+    if (body._id == req.user.id) {
+      // throw new CustomError(Enum.HTTP_CODES.FORBIDDEN, i18n.translate("COMMON.NEED_PERMISSIONS", req.user.language), i18n.translate("COMMON.NEED_PERMISSIONS", req.user.language))
+      body.roles = null;
+    }
 
     if(Array.isArray(body.roles) && body.roles.length > 0){
 

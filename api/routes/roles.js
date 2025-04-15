@@ -95,7 +95,24 @@ router.get("/", auth.checkRoles("role_view") , async (req, res) => {
 router.post('/update', auth.checkRoles("role_update"), async (req, res) => {  
     let body = req.body;
     try {
+
         if (!body.id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language) , i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["id"]));
+
+        const userRolesRef = db.collection('UserRoles');
+
+        const snapshot = await userRolesRef
+            .where('user_id', '==', req.user.id)
+            .where('role_id', '==', body.id)
+            .limit(1)
+            .get();
+        
+        if (!snapshot.empty) {
+            throw new CustomError(
+                Enum.HTTP_CODES.FORBIDDEN,
+                i18n.translate("COMMON.NEED_PERMISSIONS", req.user.language),
+                i18n.translate("COMMON.NEED_PERMISSIONS", req.user.language)
+            );
+        }
 
         let updates = {};
         
