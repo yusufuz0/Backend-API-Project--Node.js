@@ -37,12 +37,12 @@ module.exports = function () {
 
             // Kullanıcı bilgilerini döndürmek
             done(null, {
-                id: user.id,
+                id: userDoc.id,
                 roles: privileges,
                 email: user.email,
                 first_name: user.first_name,
                 last_name: user.last_name,
-                language: user.language,
+                language: user.language || "EN",
                 exp: parseInt(Date.now() / 1000) + config.JWT.EXPIRE_TIME
             });
 

@@ -7,6 +7,7 @@ module.exports= {
         "VALIDATION_ERROR": "Validation Error",
         "DUPLICATE_ERROR": "Duplicate Error!",
         "NOT_FOUND_ERROR": "Not Found Error",
+        "NEED_PERMISSIONS": "Need permission",
 
         "NOT_FOUND": "{} not found",
         "FIELD_MUST_BE_FILLED": "{} field must be filled",
