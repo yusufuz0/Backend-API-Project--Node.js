@@ -1,0 +1,9 @@
+services:
+  app:
+    image: yusufuz0/nodejsworkprojectt:latest
+    environment:
+    - CONNECTION_STRING=deneme
+    - LOG_LEVEL=info
+    - FILE_UPLOAD_PATH=/data/uploads
+    ports:
+    - "3000:3000"
